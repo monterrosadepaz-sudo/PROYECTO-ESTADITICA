@@ -1,0 +1,28 @@
+este es un archivo de prueba nada mas para verificar la conexión entre el repo local y el remoto
+
+
+requisitos del sistema:
+
+sistema deberá manejar entradas de datos caóticos ya sean en series simples o agrupadas,el sistema debería ser capaz de reconocerlos y clasificarl
+
+cuando sean series agrupadas, la expresión organizada de las clases, y según sea el intervalo entre ellas calcular automáticamente la frecuencia,dando como resultado la tabla con los dos campos base:clase ,frecuencia
+
+el sistema debe ser capaz de calcular la frecuencia relativa y la frecuencia acumulada (fr) y (fa)
+
+el sistema deberá ser capaz de calcular el pm(punto medio )cuya formula es :
+punto medio=limite inferior + limite superior/2
+
+el sistema debe ser capaz de calcular la amplitud
+
+el sistema deberá ser capaz de generar graficos:
+-de lineas -historigrama -polígono de frecuencia -ojiva -de barras -circular
+
+el sistema debe poder manejar y calcular media aritmética tanto como para series simples y como para distribución de clases y frecuencia
+
+el sistema deberá hacer el calculo automatico del punto medio x frecuencia (pmxf)
+
+el sistema deberá poder calcular y manejar quartiles tanto para series simples como de distribución
+
+el sistema deberá poder manejar y expresar deciles y percentiles
+
+el sistema debe poder manejar medidas de dispersión
