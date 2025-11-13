@@ -22,7 +22,13 @@ class SesionController extends Controller
             'tipo_serie' => $request->tipo_serie,
         ]);
 
-        return redirect()->back()->with('success', 'Sesión iniciada correctamente');
+        // Guardar en sesión para mostrar formularios dinámicos
+        session([
+            'sesion_id' => $sesion->id,
+            'tipo_serie' => $sesion->tipo_serie,
+        ]);
+
+        return redirect()->route('dashboard')->with('success', 'Sesión iniciada correctamente');
     }
 
     /**
@@ -44,4 +50,14 @@ class SesionController extends Controller
 
         return view('vistas.sesion_detalle', compact('sesion'));
     }
+
+    /**
+     * Cierra la sesión estadística activa.
+     */
+    public function cerrar(Request $request)
+    {
+        $request->session()->forget(['sesion_id', 'tipo_serie']);
+        return redirect()->route('dashboard')->with('success', 'Sesión cerrada correctamente');
+    }
 }
+

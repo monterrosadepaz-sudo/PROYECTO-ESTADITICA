@@ -38,15 +38,16 @@
 </head>
 <body>
     <div class="container-fluid">
+        
+
         <div class="row">
             <!-- Sidebar -->
             <div class="col-md-2 sidebar p-3">
                 <h4 class="mb-4">Estadística</h4>
                 <ul class="nav flex-column">
-                    <li class="nav-item"><a href="{{ route('inicio') }}" class="nav-link">Inicio</a></li>
-                    <li class="nav-item"><a href="{{ route('nueva_sesion') }}" class="nav-link">Nueva sesión</a></li>
-                    <li class="nav-item"><a href="{{ route('historial') }}" class="nav-link">Historial</a></li>
-                    <li class="nav-item"><a href="{{ route('reportes') }}" class="nav-link">Reportes</a></li>
+                    <li class="nav-item"><a href="{{ route('dashboard') }}" class="nav-link">Dashboard</a></li>
+                    <li class="nav-item"><a href="{{ route('sesion.index') }}" class="nav-link">Sesiones</a></li>
+
                 </ul>
             </div>
 
@@ -56,7 +57,7 @@
                     <h5>@yield('header')</h5>
                 </div>
                 <div class="p-4">
-                    @yield('content')
+                    @yield('contenido')
                 </div>
             </div>
         </div>

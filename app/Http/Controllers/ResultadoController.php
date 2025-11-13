@@ -7,7 +7,7 @@ use App\Models\modelos\ResultadoEstadistico;
 use App\Models\modelos\SesionEstadistica;
 use App\Models\modelos\DatosSimplesHist;
 use App\Models\modelos\ClaseAgrupadaHist;
-use App\Models\modelos\CalculosEstadisticos;
+use App\Servicios\EstadisticaService;
 
 class ResultadoController extends Controller
 {
@@ -17,11 +17,36 @@ class ResultadoController extends Controller
 
         if ($sesion->tipo_serie === 'simple') {
             $valores = DatosSimplesHist::where('sesion_id', $sesion_id)->pluck('valor')->toArray();
-        } else {
-            $valores = ClaseAgrupadaHist::where('sesion_id', $sesion_id)->get(); // se procesan diferente
-        }
 
-        $resultados = CalculosEstadisticos::procesar($valores, $sesion->tipo_serie);
+            $resultados = [
+                'media' => EstadisticaService::mediaSimple($valores),
+                'mediana' => EstadisticaService::medianaSimple($valores),
+                'moda' => implode(', ', EstadisticaService::modaSimple($valores)),
+                'varianza' => EstadisticaService::varianzaSimple($valores),
+            ];
+        } else {
+            $clases = ClaseAgrupadaHist::where('sesion_id', $sesion_id)->get();
+            $total = $clases->sum('frecuencia');
+
+            $clasesProcesadas = $clases->map(function ($clase) use ($total) {
+                $marca = EstadisticaService::puntoMedio($clase->lim_inf, $clase->lim_sup);
+                return [
+                    'lim_inf' => $clase->lim_inf,
+                    'lim_sup' => $clase->lim_sup,
+                    'marca' => $marca,
+                    'frecuencia' => $clase->frecuencia,
+                    'pmf' => EstadisticaService::productoMarcaPorFrecuencia($marca, $clase->frecuencia),
+                    'frecuencia_relativa' => EstadisticaService::frecuenciaRelativa($clase->frecuencia, $total),
+                ];
+            })->toArray();
+
+            $resultados = [
+                'media' => EstadisticaService::mediaAgrupada($clasesProcesadas),
+                'mediana' => EstadisticaService::medianaAgrupada($clasesProcesadas),
+                'moda' => EstadisticaService::modaAgrupada($clasesProcesadas),
+                'varianza' => EstadisticaService::varianzaAgrupada($clasesProcesadas),
+            ];
+        }
 
         ResultadoEstadistico::create(array_merge($resultados, [
             'sesion_id' => $sesion_id,
@@ -30,4 +55,5 @@ class ResultadoController extends Controller
         return redirect()->back()->with('success', 'Resultados calculados y guardados');
     }
 }
+
 
