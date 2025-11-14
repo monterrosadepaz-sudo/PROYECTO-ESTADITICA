@@ -19,20 +19,21 @@ class ResultadoController extends Controller
             $valores = DatosSimplesHist::where('sesion_id', $sesion_id)->pluck('valor')->toArray();
 
             $resultados = [
-                'media' => EstadisticaService::mediaSimple($valores),
-                'mediana' => EstadisticaService::medianaSimple($valores),
-                'moda' => implode(', ', EstadisticaService::modaSimple($valores)),
-                'varianza' => EstadisticaService::varianzaSimple($valores),
+                'media' => EstadisticaService::media($valores),
+                'mediana' => EstadisticaService::mediana($valores),
+                'moda' => implode(', ', EstadisticaService::moda($valores)),
+                'varianza' => EstadisticaService::varianza($valores),
+                'desviacion' => EstadisticaService::desviacionEstandar($valores),
             ];
         } else {
             $clases = ClaseAgrupadaHist::where('sesion_id', $sesion_id)->get();
             $total = $clases->sum('frecuencia');
 
             $clasesProcesadas = $clases->map(function ($clase) use ($total) {
-                $marca = EstadisticaService::puntoMedio($clase->lim_inf, $clase->lim_sup);
+                $marca = EstadisticaService::puntoMedio($clase->limite_inferior, $clase->limite_superior);
                 return [
-                    'lim_inf' => $clase->lim_inf,
-                    'lim_sup' => $clase->lim_sup,
+                    'lim_inf' => $clase->limite_inferior,
+                    'lim_sup' => $clase->limite_superior,
                     'marca' => $marca,
                     'frecuencia' => $clase->frecuencia,
                     'pmf' => EstadisticaService::productoMarcaPorFrecuencia($marca, $clase->frecuencia),
@@ -40,11 +41,15 @@ class ResultadoController extends Controller
                 ];
             })->toArray();
 
+            // Aplicamos frecuencia acumulada antes de cálculos
+            $clasesProcesadas = EstadisticaService::frecuenciaAcumulada($clasesProcesadas);
+
             $resultados = [
                 'media' => EstadisticaService::mediaAgrupada($clasesProcesadas),
                 'mediana' => EstadisticaService::medianaAgrupada($clasesProcesadas),
                 'moda' => EstadisticaService::modaAgrupada($clasesProcesadas),
                 'varianza' => EstadisticaService::varianzaAgrupada($clasesProcesadas),
+                'desviacion' => EstadisticaService::desviacionAgrupada($clasesProcesadas),
             ];
         }
 

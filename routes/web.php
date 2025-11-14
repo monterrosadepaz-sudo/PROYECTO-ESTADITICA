@@ -30,6 +30,10 @@ Route::post('/clases-agrupadas/clonar/{sesion_id}', [ClaseAgrupadaController::cl
 // Resultados estadísticos
 Route::post('/resultados/calcular/{sesion_id}', [ResultadoController::class, 'calcular'])->name('resultados.calcular');
 
+//pdf
+Route::get('/sesion/{id}/reporte', [SesionController::class, 'reportePDF'])->name('sesion.reporte');
+
+
 //cerrar sesion
 Route::post('/sesion/cerrar', [SesionController::class, 'cerrar'])->name('sesion.cerrar');
 

@@ -10,6 +10,6 @@ class DatosSimplesRT extends Model
 
     protected $fillable = [
         'valor',
-        'sesion_id',
+        
     ];
 }

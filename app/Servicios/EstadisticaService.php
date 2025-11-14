@@ -5,12 +5,12 @@ namespace App\Servicios;
 class EstadisticaService
 {
     // Series simples
-    public static function mediaSimple(array $valores): float
+    public static function media(array $valores): float
     {
         return array_sum($valores) / count($valores);
     }
 
-    public static function medianaSimple(array $valores): float
+    public static function mediana(array $valores): float
     {
         sort($valores);
         $n = count($valores);
@@ -21,19 +21,24 @@ class EstadisticaService
             : $valores[$medio];
     }
 
-    public static function modaSimple(array $valores): array
+    public static function moda(array $valores): array
     {
         $frecuencias = array_count_values($valores);
         $max = max($frecuencias);
         return array_keys(array_filter($frecuencias, fn($f) => $f === $max));
     }
 
-    public static function varianzaSimple(array $valores): float
+    public static function varianza(array $valores): float
     {
-        $media = self::mediaSimple($valores);
+        $media = self::media($valores);
         $n = count($valores);
         $suma = array_reduce($valores, fn($carry, $x) => $carry + pow($x - $media, 2), 0);
         return $suma / $n;
+    }
+
+    public static function desviacionEstandar(array $valores): float
+    {
+        return sqrt(self::varianza($valores));
     }
 
     // Series agrupadas
@@ -45,47 +50,53 @@ class EstadisticaService
     }
 
     public static function medianaAgrupada(array $clases): float
-{
-    $clases = self::frecuenciaAcumulada($clases);
-    $n = array_sum(array_column($clases, 'frecuencia'));
-    $n2 = $n / 2;
+    {
+        $clases = self::frecuenciaAcumulada($clases);
+        $n = array_sum(array_column($clases, 'frecuencia'));
+        $n2 = $n / 2;
 
-    foreach ($clases as $i => $clase) {
-        if ($clase['frecuencia_acumulada'] >= $n2) {
-            $L = $clase['lim_inf'];
-            $F = $i > 0 ? $clases[$i - 1]['frecuencia_acumulada'] : 0;
-            $f = $clase['frecuencia'];
-            $h = $clase['lim_sup'] - $clase['lim_inf'];
-            return $L + (($n2 - F) / $f) * $h;
+        foreach ($clases as $i => $clase) {
+            if ($clase['frecuencia_acumulada'] >= $n2) {
+                $L = $clase['lim_inf'];
+                $F = $i > 0 ? $clases[$i - 1]['frecuencia_acumulada'] : 0;
+                $f = $clase['frecuencia'];
+                $h = $clase['lim_sup'] - $clase['lim_inf'];
+                return $L + (($n2 - $F) / $f) * $h;
+            }
         }
+
+        return 0;
     }
 
-    return 0;
+    public static function modaAgrupada(array $clases): float
+    {
+        $modalIndex = array_keys(array_column($clases, 'frecuencia'), max(array_column($clases, 'frecuencia')))[0];
+        $modal = $clases[$modalIndex];
 
-}
-    public static function modaAgrupada(array $clases):  float
-{
-    $modalIndex = array_keys(array_column($clases, 'frecuencia'), max(array_column($clases, 'frecuencia')))[0];
-    $modal = $clases[$modalIndex];
+        $f1 = $modal['frecuencia'];
+        $f0 = $modalIndex > 0 ? $clases[$modalIndex - 1]['frecuencia'] : 0;
+        $f2 = $modalIndex < count($clases) - 1 ? $clases[$modalIndex + 1]['frecuencia'] : 0;
+        $L = $modal['lim_inf'];
+        $h = $modal['lim_sup'] - $modal['lim_inf'];
 
-    $f1 = $modal['frecuencia'];
-    $f0 = $modalIndex > 0 ? $clases[$modalIndex - 1]['frecuencia'] : 0;
-    $f2 = $modalIndex < count($clases) - 1 ? $clases[$modalIndex + 1]['frecuencia'] : 0;
-    $L = $modal['lim_inf'];
-    $h = $modal['lim_sup'] - $modal['lim_inf'];
+        return $L + (($f1 - $f0) / (($f1 - $f0) + ($f1 - $f2))) * $h;
+    }
 
-    return $L + (($f1 - $f0) / (($f1 - $f0) + ($f1 - $f2))) * $h;
-}
     public static function varianzaAgrupada(array $clases): float
-{
-    $media = self::mediaAgrupada($clases);
-    $suma = array_reduce($clases, function ($carry, $clase) use ($media) {
-        return $carry + $clase['frecuencia'] * pow($clase['marca'] - $media, 2);
-    }, 0);
+    {
+        $media = self::mediaAgrupada($clases);
+        $suma = array_reduce($clases, function ($carry, $clase) use ($media) {
+            return $carry + $clase['frecuencia'] * pow($clase['marca'] - $media, 2);
+        }, 0);
 
-    $total = array_sum(array_column($clases, 'frecuencia'));
-    return $total > 0 ? $suma / $total : 0;
-}
+        $total = array_sum(array_column($clases, 'frecuencia'));
+        return $total > 0 ? $suma / $total : 0;
+    }
+
+    public static function desviacionAgrupada(array $clases): float
+    {
+        return sqrt(self::varianzaAgrupada($clases));
+    }
 
     // Auxiliares
     public static function puntoMedio(float $limInf, float $limSup): float
@@ -112,5 +123,88 @@ class EstadisticaService
     {
         return $marca * $fi;
     }
+
+        // Cuartiles, deciles y percentiles para series simples
+public static function cuartil(array $valores, int $k): float
+{
+    sort($valores);
+    $n = count($valores);
+    $pos = ($k * ($n + 1)) / 4;
+    return self::valorEnPosicion($valores, $pos);
 }
 
+public static function decil(array $valores, int $k): float
+{
+    sort($valores);
+    $n = count($valores);
+    $pos = ($k * ($n + 1)) / 10;
+    return self::valorEnPosicion($valores, $pos);
+}
+
+public static function percentil(array $valores, int $k): float
+{
+    sort($valores);
+    $n = count($valores);
+    $pos = ($k * ($n + 1)) / 100;
+    return self::valorEnPosicion($valores, $pos);
+}
+
+// Auxiliar para interpolación rápida
+private static function valorEnPosicion(array $valores, float $pos): float
+{
+    $n = count($valores);
+    if ($pos <= 1) return $valores[0];
+    if ($pos >= $n) return $valores[$n - 1];
+
+    $i = floor($pos) - 1;
+    $d = $pos - floor($pos);
+    return $valores[$i] + $d * ($valores[$i + 1] - $valores[$i]);
+}
+
+//para las agrupadas
+
+public static function cuartilAgrupado(array $clases, int $k): float
+{
+    $clases = self::frecuenciaAcumulada($clases);
+    $n = array_sum(array_column($clases, 'frecuencia'));
+    $pos = $k * $n / 4;
+
+    return self::interpolacionPorClase($clases, $pos);
+}
+
+public static function decilAgrupado(array $clases, int $k): float
+{
+    $clases = self::frecuenciaAcumulada($clases);
+    $n = array_sum(array_column($clases, 'frecuencia'));
+    $pos = $k * $n / 10;
+
+    return self::interpolacionPorClase($clases, $pos);
+}
+
+public static function percentilAgrupado(array $clases, int $k): float
+{
+    $clases = self::frecuenciaAcumulada($clases);
+    $n = array_sum(array_column($clases, 'frecuencia'));
+    $pos = $k * $n / 100;
+
+    return self::interpolacionPorClase($clases, $pos);
+}
+
+// Auxiliar compartido con mediana
+private static function interpolacionPorClase(array $clases, float $pos): float
+{
+    foreach ($clases as $i => $clase) {
+        if ($clase['frecuencia_acumulada'] >= $pos) {
+            $L = $clase['lim_inf'];
+            $F = $i > 0 ? $clases[$i - 1]['frecuencia_acumulada'] : 0;
+            $f = $clase['frecuencia'];
+            $h = $clase['lim_sup'] - $clase['lim_inf'];
+            return $L + (($pos - F) / $f) * $h;
+        }
+    }
+    return 0;
+}
+
+
+}
+            
